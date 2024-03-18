@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laiko biletų uždarymas ir rūšiavimas</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+
+    .container {
+        width: 1080px;
+        margin: 0 auto;
+    }
+
+    .circle-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #4286f4;
+        margin: 5px;
+        opacity: 0;
+        animation: fadeIn 0.5s ease-in-out forwards;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white; /* Kolor tekstu */
+    }
+
+    .basket-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .basket {
+        padding: 10px;
+        margin-top: 20px;
+        flex-grow: 1;
+    }
+
+    .basketTitle {
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    .basket-content {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes moveDown {
+        0% {
+            transform: translateY(-200px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Kolory koszy */
+    #basket-30-60min {
+        background-color: #ffcc00; /* Žalias */
+    }
+
+    #basket-60-120min {
+        background-color: #ff6666; /* Raudonas */
+    }
+
+    #basket-120-180min {
+        background-color: #66ccff; /* Mėlynas */
+    }
+
+    #basket-180-240min {
+        background-color: #ff99cc; /* Rozinis */
+    }
+
+    #basket-over240min {
+        background-color: #99ccff; /* Inny kolor */
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Laiko biletų uždarymas ir rūšiavimas</h2>
+    <label>
+        Pasirinkite laikotarpį norite sugeneruoti:
+        <select id="numberOfCircles">
+            <option value="50">7 Dienos</option>
+            <option value="110">14 Dienos</option>
+            <option value="210">21 Dienos</option>
+        </select>
+    </label>
+    <button onclick="generateAndSortCircles()">Generuoti ir rūšiuoti laiką</button>
+    <div class="circle-container" id="circles">
+        <!-- Laiko ratai bus generuojami čia -->
+    </div>
+    <div class="basket-container">
+        <div class="basket" id="basket-30-60min">
+            <h3 class="basketTitle">30-60 minučių:</h3>
+            <div class="basket-content"></div>
+            <p>Aritmetinis vidurkis: <span id="avg-30-60min"></span></p>
+            <p>Mediana: <span id="median-30-60min"></span></p>
+            <p>Moda: <span id="mode-30-60min"></span></p>
+            <p>Kiekis: <span id="count-30-60min"></span></p>
+        </div>
+        <div class="basket" id="basket-60-120min">
+            <h3 class="basketTitle">1-2 val.:</h3>
+            <div class="basket-content"></div>
+            <p>Aritmetinis vidurkis: <span id="avg-60-120min"></span></p>
+            <p>Mediana: <span id="median-60-120min"></span></p>
+            <p>Moda: <span id="mode-60-120min"></span></p>
+            <p>Kiekis: <span id="count-60-120min"></span></p>
+        </div>
+        <div class="basket" id="basket-120-180min">
+            <h3 class="basketTitle">2-3 val:</h3>
+            <div class="basket-content"></div>
+            <p>Aritmetinis vidurkis: <span id="avg-120-180min"></span></p>
+            <p>Mediana: <span id="median-120-180min"></span></p>
+            <p>Moda: <span id="mode-120-180min"></span></p>
+            <p>Kiekis: <span id="count-120-180min"></span></p>
+        </div>
+        <div class="basket" id="basket-180-240min">
+            <h3 class="basketTitle">3-4 val:</h3>
+            <div class="basket-content"></div>
+            <p>Aritmetinis vidurkis: <span id="avg-180-240min"></span></p>
+            <p>Mediana: <span id="median-180-240min"></span></p>
+            <p>Moda: <span id="mode-180-240min"></span></p>
+            <p>Kiekis: <span id="count-180-240min"></span></p>
+        </div>
+        <div class="basket" id="basket-over240min">
+            <h3 class="basketTitle">Daugiau nei 4 valandos:</h3>
+            <div class="basket-content"></div>
+            <p>Aritmetinis vidurkis: <span id="avg-over240min"></span></p>
+            <p>Mediana: <span id="median-over240min"></span></p>
+            <p>Moda: <span id="mode-over240min"></span></p>
+            <p>Kiekis: <span id="count-over240min"></span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateRandomTimes(count) {
+    const times = [];
+    for (let i = 0; i < count; i++) {
+        const randomMinutes = Math.floor(Math.random() * 240) + 30; // Sugeneruojame laiką nuo 30 iki 269 minučių
+        times.push(randomMinutes);
+    }
+    return times.sort((a, b) => a - b);
+}
+
+function calculateStatistics(times) {
+    const sum = times.reduce((acc, val) => acc + val, 0);
+    const avg = sum / times.length;
+
+    const median = calculateMedian(times);
+
+    const mode = calculateMode(times);
+
+    return { avg, median, mode };
+}
+
+function calculateMedian(times) {
+    const sortedTimes = times.slice().sort((a, b) => a - b);
+    const middleIndex = Math.floor(sortedTimes.length / 2);
+    if (sortedTimes.length % 2 === 0) {
+        return (sortedTimes[middleIndex - 1] + sortedTimes[middleIndex]) / 2;
+    } else {
+        return sortedTimes[middleIndex];
+    }
+}
+
+function calculateMode(times) {
+    const counts = {};
+    times.forEach(time => {
+        const hours = Math.floor(time / 60); // Zamiana minut na godziny
+        const minutes = time % 60; // Pozostałe minuty
+        const timeString = `${hours}:${minutes}`;
+        counts[timeString] = (counts[timeString] || 0) + 1;
+    });
+    let maxCount = 0;
+    let mode = null;
+    for (const timeString in counts) {
+        if (counts[timeString] > maxCount) {
+            maxCount = counts[timeString];
+            mode = { time: timeString, count: counts[timeString] }; // Zwracamy obiekt z czasem i liczbą wystąpień
+        }
+    }
+    return mode;
+}
+
+function clearBasketContents() {
+    document.querySelectorAll('.basket-content').forEach(content => {
+        content.innerHTML = '';
+    });
+}
+
+function generateCircles(count) {
+    const times = generateRandomTimes(count);
+    const circlesContainer = document.getElementById('circles');
+    circlesContainer.innerHTML = '';
+
+    times.forEach((minutes, index) => {
+        const circle = document.createElement('div');
+        circle.className = 'circle';
+        circle.textContent = `${Math.floor(minutes / 60)}:${(minutes % 60 < 10 ? '0' : '') + minutes % 60}`; // Laiko rodymas
+        circle.style.animationDelay = `${index * 0.1}s`; // Animacijos delsa, kad laikas leistų panašėti
+        circlesContainer.appendChild(circle);
+    });
+
+    return times;
+}
+
+function sortCircles(times) {
+    clearBasketContents(); // Usuwamy stare wyniki przed sortowaniem
+
+    const baskets = {
+        '30-60min': document.getElementById('basket-30-60min').getElementsByClassName('basket-content')[0],
+        '60-120min': document.getElementById('basket-60-120min').getElementsByClassName('basket-content')[0],
+        '120-180min': document.getElementById('basket-120-180min').getElementsByClassName('basket-content')[0],
+        '180-240min': document.getElementById('basket-180-240min').getElementsByClassName('basket-content')[0],
+        'over240min': document.getElementById('basket-over240min').getElementsByClassName('basket-content')[0]
+    };
+
+    times.forEach((minutes, index) => {
+        let basketName = '';
+
+        if (minutes >= 30 && minutes <= 60) {
+            basketName = '30-60min';
+        } else if (minutes > 60 && minutes <= 120) {  // Poprawiony warunek dla 60-120min
+            basketName = '60-120min';
+        } else if (minutes > 120 && minutes <= 180) { // Poprawiony warunek dla 120-180min
+            basketName = '120-180min';
+        } else if (minutes > 180 && minutes <= 240) { // Poprawiony warunek dla 180-240min
+            basketName = '180-240min';
+        } else { // Poprawiony warunek dla over240min
+            basketName = 'over240min';
+        }
+
+        const circle = document.createElement('div');
+        circle.className = 'circle';
+        circle.textContent = `${Math.floor(minutes / 60)}:${(minutes % 60 < 10 ? '0' : '') + minutes % 60}`; // Laiko rodymas
+        circle.style.animationDelay = `${index * 0.1}s`; // Animacijos delsa, kad laikas leistų panašėti
+        circle.style.animation = `moveDown 1s forwards, fadeIn 0.5s ease-in-out forwards`;
+        baskets[basketName].appendChild(circle);
+    });
+
+    Object.entries(baskets).forEach(([basketName, basket]) => {
+        const basketTimes = Array.from(basket.children).map(circle => {
+            const [hours, minutes] = circle.textContent.split(':').map(num => parseInt(num));
+            return hours * 60 + minutes;
+        });
+        const { avg, median, mode } = calculateStatistics(basketTimes);
+        document.getElementById(`avg-${basketName}`).textContent = avg.toFixed(2);
+        document.getElementById(`median-${basketName}`).textContent = median;
+        document.getElementById(`mode-${basketName}`).textContent = `${mode.time} (${mode.count})`; // Wyświetlamy czas i liczbę wystąpień
+        document.getElementById(`count-${basketName}`).textContent = basketTimes.length;
+    });
+}
+
+function generateAndSortCircles() {
+    const numberOfCircles = document.getElementById('numberOfCircles').value;
+    const times = generateCircles(numberOfCircles);
+    setTimeout(() => {
+        sortCircles(times);
+    }, numberOfCircles * 100); // Pauza pomiędzy generowaniem a sortowaniem, 100ms za każdy krykščių
+}
+</script>
+
+</body>
+</html>
